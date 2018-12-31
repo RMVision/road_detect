@@ -190,7 +190,8 @@ std::vector<cv::Point> LaneDetector::regression(std::vector<std::vector<cv::Vec4
     std::vector<cv::Point> left_pts;
 
     // If right lines are being detected, fit a line using all the init and final points of the lines
-    if (right_flag == true) {
+    if (!right_flag) {}
+    else {
         for (auto i : left_right_lines[0]) {
             ini = cv::Point(i[0], i[1]);
             fini = cv::Point(i[2], i[3]);
@@ -208,7 +209,8 @@ std::vector<cv::Point> LaneDetector::regression(std::vector<std::vector<cv::Vec4
     }
 
     // If left lines are being detected, fit a line using all the init and final points of the lines
-    if (left_flag == true) {
+    if (!left_flag) {}
+    else {
         for (auto j : left_right_lines[1]) {
             ini2 = cv::Point(j[0], j[1]);
             fini2 = cv::Point(j[2], j[3]);

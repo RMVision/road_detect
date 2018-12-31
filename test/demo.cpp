@@ -39,7 +39,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *@param argv[] is a string to the full path of the demo video
  *@return flag_plot tells if the demo has sucessfully finished
  */
-int main(int argc, char *argv[]) {
+int main() {
     if (argc != 2) {
         std::cout << "Not enough parameters" << std::endl;
         argv[1] = "../video/challenge.mp4";

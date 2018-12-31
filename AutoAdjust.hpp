@@ -3,9 +3,9 @@
 //
 
 #include <iostream>
-#include "opencv2/core.hpp"
-#include "opencv2/imgproc.hpp"
-#include "opencv2/highgui.hpp"
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 
 using namespace std;
 using namespace cv;
@@ -122,74 +122,3 @@ int adjustBrightnessContrast(InputArray src, OutputArray dst, int brightness, in
 }
 
 
-static string window_name = "photo";
-static Mat src, src1, dst1;
-static int brightness = 255;
-static int contrast = 255;
-
-static void callbackAdjust(int, void *) {
-    Mat dst,  HLS_frame;
-    Mat white_mask, yellow_mask;
-    adjustBrightnessContrast(src, dst, brightness - 255, contrast - 255);
-    imshow(window_name, dst);
-
-    Mat kernel = (Mat_<int>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
-    filter2D(dst, dst, dst.depth(), kernel);
-
-    cvtColor(dst, HLS_frame, COLOR_BGR2HSV_FULL);
-    // 设置阈值，挑出白色与黄色区域
-    Vec3i white_low(0, 0, 221), yellow_low(26, 43, 46);
-    Vec3i white_top(180, 30, 255), yellow_top(34, 255, 255);
-
-    inRange(HLS_frame, white_low, white_top, white_mask);
-    inRange(HLS_frame, yellow_low, yellow_top, yellow_mask);
-
-    imshow("white_mask new", white_mask);
-    imshow("yellow_mask new", yellow_mask);
-}
-
-
-int main() {
-
-    VideoCapture capture("../video/vid4.mp4");
-    Mat frame, HLS_frame;
-    Mat resize_frame;
-    Mat white_mask, yellow_mask;
-    int width = (int) capture.get(3);
-    int height = (int) capture.get(4);
-    Size s(width / 2, height / 2);
-    while (capture.read(frame)) {
-
-        resize(frame, resize_frame, s);
-        imshow("frame", resize_frame);
-
-        cvtColor(resize_frame, HLS_frame, COLOR_BGR2HSV_FULL);
-        // 设置阈值，挑出白色与黄色区域
-        Vec3i white_low(0, 0, 221), yellow_low(26, 43, 46);
-        Vec3i white_top(180, 30, 255), yellow_top(34, 255, 255);
-
-        inRange(HLS_frame, white_low, white_top, white_mask);
-        inRange(HLS_frame, yellow_low, yellow_top, yellow_mask);
-
-        imshow("white_mask", white_mask);
-        imshow("yellow_mask", yellow_mask);
-
-
-        BrightnessAndContrastAuto(resize_frame, src, 5);
-
-        if (!src.data) {
-            cout << "error read image" << endl;
-            return -1;
-        }
-
-        namedWindow(window_name);
-        createTrackbar("brightness", window_name, &brightness, 2 * brightness, callbackAdjust);
-        createTrackbar("contrast", window_name, &contrast, 2 * contrast, callbackAdjust);
-        callbackAdjust(0, nullptr);
-
-        if (waitKey(20) == 'q')
-            break;
-    }
-    return 0;
-
-}
