@@ -102,3 +102,5 @@ road\_detect
 - http://www.transistor.io/revisiting-lane-detection-using-opencv.html  
 - [基于opencv的车道线实施检测（浙江大学）](https://wenku.baidu.com/view/a93bb15384254b35eefd34bd.html)
 - https://www.bilibili.com/video/av23653073/
+- [Lane-Detection-for-Autonomous-Cars](https://github.com/MichiMaestre/Lane-Detection-for-Autonomous-Cars)
+- [亮度对比度调整](https://formoon.github.io/2018/01/04/opencv-brightness-and-contrast/)
