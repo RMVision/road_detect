@@ -104,3 +104,5 @@ road\_detect
 - https://www.bilibili.com/video/av23653073/
 - [Lane-Detection-for-Autonomous-Cars](https://github.com/MichiMaestre/Lane-Detection-for-Autonomous-Cars)
 - [亮度对比度调整](https://formoon.github.io/2018/01/04/opencv-brightness-and-contrast/)
+- [从简单车道线识别认识调参的重要性](https://zhuanlan.zhihu.com/p/29012549)
+- [Opencv图像增强算法实法](https://loopvoid.github.io/2017/02/19/Opencv%E5%9B%BE%E5%83%8F%E5%A2%9E%E5%BC%BA%E7%AE%97%E6%B3%95%E5%AE%9E%E6%B3%95/)
