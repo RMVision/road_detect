@@ -11,13 +11,11 @@
 using namespace std;
 using namespace cv;
 
-static string path = "/home/zzh/1.mp4";
+static string path = "../video/vid1.mp4";
 static int brightness = 255;
 static int contrast = 255;
 
-// 设置阈值，挑出白色与黄色区域
-static Vec3i white_low(0, 180, 0), yellow_low(26, 43, 46);
-static Vec3i white_top(255, 255, 255), yellow_top(34, 255, 255);
+
 
 // 设置trackbar滑动块
 int max_thres = 255;
@@ -25,18 +23,24 @@ int val = 1;
 Mat canny_white;
 Mat white_mask, yellow_mask;
 
-void canny_call_back(int, void *);
-
-
-Mat getWarpPerspective(Mat &src);
+void cannyCallBack(int, void *);
+Mat getWarpPerspective(const Mat &input);
 Mat reverse(Mat &src);
+
+Mat deNoise(const Mat &input);
+
+Mat imgEnhancement(const Mat &input);
+
+Mat imgMask(const Mat &input);
 
 int main() {
 
     VideoCapture capture(path);
-    Mat frame, HLS_frame;
-    Mat resize_frame, auto_frame, adjust_frame;
-    Mat laplace_frame;
+    Mat frame;
+    Mat resize_frame, auto_frame, adjust_frame, denoise_frame;
+    Mat enhancement_frame;
+    Mat warp;
+    Mat mask_frame;
 
     int width = (int) capture.get(3);
     int height = (int) capture.get(4);
@@ -47,33 +51,33 @@ int main() {
     Mat roi_mat;
     vector<Vec4i> lines;
 
-    namedWindow("white", WINDOW_AUTOSIZE);
     while (capture.read(frame)) {
         //修改图片大小
         resize(frame, resize_frame, s);
-
+        imshow("原图", resize_frame);
 
         //亮度及对比度自适应
         BrightnessAndContrastAuto(resize_frame, auto_frame, 5);
-        if (!auto_frame.data) {
-            cout << "自适应失败" << endl;
-            return -1;
-        }
         adjustBrightnessContrast(auto_frame, adjust_frame, brightness - 255, contrast - 255);
         imshow("亮度及对比度自适应结果", adjust_frame);
 
-        //Laplace图像增强
-        Mat kernel = (Mat_<int>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
-        filter2D(adjust_frame, laplace_frame, resize_frame.depth(), kernel);
+        //图像增强
+        enhancement_frame = imgEnhancement(adjust_frame);
 
-        Mat warp = getWarpPerspective(laplace_frame);
+        //进行模糊化处理
+        denoise_frame = deNoise(enhancement_frame);
 
-        //转换为HLS颜色空间
-        cvtColor(warp, HLS_frame, COLOR_BGR2HLS);
-        inRange(HLS_frame, white_low, white_top, white_mask);
-        inRange(HLS_frame, yellow_low, yellow_top, yellow_mask);
-        Mat mask;
-        bitwise_or(white_mask, yellow_mask, mask);
+        //TODO:这里应该有个形态学变换
+
+        //透视变换
+        warp = getWarpPerspective(denoise_frame);
+        imshow("经过透视变换的道路图", warp);
+
+        //标记黄色与白色
+        mask_frame = imgMask(warp);
+        imshow("标记黄色与白色", mask_frame);
+
+
 //        imshow("白色1", white_mask);
         //canny边缘检测
 //        blur(white_mask, white_mask, Size(5, 5));
@@ -83,16 +87,16 @@ int main() {
 
         // roi Hough直线检测
  //       roi_mat = canny_white(roi);
-        HoughLinesP(mask, lines, 1, CV_PI / 180, 30, 30);
+        HoughLinesP(mask_frame, lines, 1, CV_PI / 180, 30, 30);
         Mat copy_mask = Mat::zeros(warp.size(), warp.type());
-        for (int i = 0; i < lines.size(); i++) {
-            line(copy_mask, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(255,0,0),2);
+        for (auto &i : lines) {
+            line(copy_mask, Point(i[0], i[1]), Point(i[2], i[3]), Scalar(255,0,0),2);
         }
 
         Mat re_warp = reverse(copy_mask);
         Mat dst;
         add(re_warp, resize_frame, dst);
-        imshow("warp", warp);
+
         imshow("dst", dst);
         imshow("copy_mask", re_warp);
  /*       double k_queue[lines.size()];
@@ -134,23 +138,54 @@ int main() {
 
 }
 
-void canny_call_back(int, void *) {
-    Canny(white_mask, canny_white, val, val * 2);
+Mat imgMask(const Mat &input) {
 
+    // 设置阈值，挑出白色与黄色区域
+    static Vec3i white_low(0, 180, 0), yellow_low(26, 43, 46);
+    static Vec3i white_top(255, 255, 255), yellow_top(34, 255, 255);
+    Mat output;
+    Mat HLS_frame;
+
+    //转换为HLS颜色空间
+    cvtColor(input, HLS_frame, COLOR_BGR2HLS);
+    inRange(HLS_frame, white_low, white_top, white_mask);
+    inRange(HLS_frame, yellow_low, yellow_top, yellow_mask);
+    bitwise_or(white_mask, yellow_mask, output);
+
+    return output;
+}
+
+Mat imgEnhancement(const Mat &input) {
+    Mat output;
+    Mat kernel = (Mat_<int>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
+    filter2D(input, output, input.depth(), kernel);
+
+    return output;
+}
+
+Mat deNoise(const Mat &input) {
+    Mat output;
+    GaussianBlur(input, output, cv::Size(3, 3), 0, 0);
+
+    return output;
+}
+
+void cannyCallBack(int, void *) {
+    Canny(white_mask, canny_white, val, val * 2);
     imshow("white", canny_white);
 }
 
-Mat getWarpPerspective(Mat &src) {
+Mat getWarpPerspective(const Mat &input) {
     Point2f pts_src[] = {
-            Point2d(0, src.rows * 0.95),
-            Point2d(src.cols - 1, src.rows * 0.95),
-            Point2d(src.cols * 0.5, src.rows * 0.7),
-            Point2d(src.cols * 0.15, src.rows * 0.7),
+            Point2d(0, input.rows * 0.95),
+            Point2d(input.cols - 1, input.rows * 0.95),
+            Point2d(input.cols * 0.5, input.rows * 0.7),
+            Point2d(input.cols * 0.15, input.rows * 0.7),
     };
     Point2f pts_dst[] = {
-            Point2d(0, src.rows * 0.9),
-            Point2d(src.cols-1, src.rows * 0.9),
-            Point2d(src.cols-1, 0),
+            Point2d(0, input.rows * 0.9),
+            Point2d(input.cols-1, input.rows * 0.9),
+            Point2d(input.cols-1, 0),
             Point2d(0, 0),
     };
 
@@ -162,7 +197,7 @@ Mat getWarpPerspective(Mat &src) {
 
     Mat M = getPerspectiveTransform(pts_src, pts_dst);
     Mat warp;
-    warpPerspective(src, warp, M, src.size(), INTER_LINEAR);
+    warpPerspective(input, warp, M, input.size(), INTER_LINEAR);
 /*    Mat M2 = getPerspectiveTransform(pts_src, pts_dst);
     Mat warp2;
     warpPerspective(warp, warp2, M2, src.size(), INTER_LINEAR);*/
