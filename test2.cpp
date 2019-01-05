@@ -10,15 +10,19 @@
 
 using namespace std;
 using namespace cv;
-bool isRed(float b_data, float g_data, float r_data);
-bool isBlue(float b_data, float g_data, float r_data);
-bool isYellow(float b_data, float g_data, float r_data);
+
+Mat filterMat(Mat &input);
+
+Mat imgMorphological(Mat &input);
+
+Mat blurMat(Mat &input, int dSize);
+
+Mat drawRect(Mat &input, Mat &frame);
+
 int main() {
     VideoCapture capture("/home/zzh/2.mp4");
     Mat frame;
-    int sum = 0;
-    int b, g, r;
-    float b_data, g_data, r_data;
+
 
     int width = (int) capture.get(3);
     int height = (int) capture.get(4);
@@ -27,38 +31,70 @@ int main() {
     while (capture.read(frame)) {
         resize(frame, resize_frame, s);
         Mat temp = Mat::zeros(resize_frame.size(), CV_8UC1);
-        for (int i = 0; i < resize_frame.rows; i++) {
-            for (int j = 0; j < resize_frame.cols; j++) {
-                b = resize_frame.at<Vec3i>(i, j)[0];
-                g = resize_frame.at<Vec3i>(i, j)[1];
-                r = resize_frame.at<Vec3i>(i, j)[2];
-                sum = b + g + r;
 
-                b_data = (float) b / sum;
-                g_data = (float) g / sum;
-                r_data = (float) r / sum;
+        // 转换HSV颜色空间
+        Mat HSV_frame;
+        cvtColor(resize_frame, HSV_frame, COLOR_BGR2HSV);
 
-                if(isRed(b_data,g_data,r_data) || isBlue(b_data,g_data,r_data) || isYellow(b_data,g_data,r_data)) {
-                    temp.at<uchar>(i, j) = 255;
-                }
-            }
-        }
-        imshow("temp", temp);
-        imshow("frame", resize_frame);
-        if( waitKey(10) == 'q')
+        // 提取区域
+        Mat filter_mat = filterMat(HSV_frame);
+
+        // 模糊处理
+        Mat blur_mat = blurMat(filter_mat, 3);
+
+        // 形态学变换
+        Mat morph_mat = imgMorphological(blur_mat);
+
+        //绘制矩形
+        Mat result = drawRect(morph_mat, resize_frame);
+
+        imshow("morph_mat", result);
+//        imshow("frame", resize_frame);
+        if (waitKey(10) == 'q')
             break;
     }
     return 0;
 }
 
-bool isRed(float b_data, float g_data, float r_data) {
-    return (r_data >= 0.4) && (g_data <= 0.3);
+Mat filterMat(Mat &input) {
+    Mat output;
+    Mat blue_mask, red_mask, yellow_mask;
+    Vec3i blue_low(100, 50, 50), blue_high(124, 255, 255);
+//    Vec3i red_low(0, 50, 50), red_high(10, 255, 255);
+//    Vec3i yellow_low(25, 50, 50), yellow_high(35, 255, 255);
+    inRange(input, blue_low, blue_high, blue_mask);
+//    inRange(input, red_low, red_high, red_mask);
+//    inRange(input, yellow_low, yellow_high, yellow_mask);
+//    Mat temp;
+//    imshow("blue_mask", blue_mask);
+//    imshow("red_mask", red_mask);
+//    bitwise_or(blue_mask, red_mask, output);
+    return blue_mask;
 }
 
-bool isBlue(float b_data, float g_data, float r_data) {
-    return b_data >= 0.4;
+Mat blurMat(Mat &input, int dSize) {
+    Mat output;
+//    blur(input, output, Size(dSize, dSize));
+    GaussianBlur(input, output, Size(dSize, dSize), 0);
+    return output;
 }
 
-bool isYellow(float b_data, float g_data, float r_data) {
-    return r_data + g_data >= 0.85;
+Mat imgMorphological(Mat &input) {
+    Mat output;
+    Mat kernel = getStructuringElement(MORPH_RECT, Size(21, 7));
+    morphologyEx(input, output, MORPH_CLOSE, kernel);
+    return output;
+}
+
+Mat drawRect(Mat &input, Mat &frame) {
+    //  查找轮廓
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
+    Mat output = frame.clone();
+    findContours(input, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
+    for (int i = 0; i < contours.size(); i++) {
+        Rect rect = boundingRect(contours[i]);
+        rectangle(output, rect, Scalar(0,0,255),2);
+    }
+    return output;
 }
