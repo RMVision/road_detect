@@ -6,12 +6,13 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
 #include "AutoAdjust.hpp" //亮度及对比度自适应方案
 
 using namespace std;
 using namespace cv;
 
-static string path = "../video/vid1.mp4";
+static string path = "../video/challenge.mp4";
 static int brightness = 255;
 static int contrast = 255;
 
@@ -57,7 +58,7 @@ int main() {
     while (capture.read(frame)) {
         //修改图片大小
         resize(frame, resize_frame, s);
-        imshow("原图", resize_frame);
+
 
         //亮度及对比度自适应
         BrightnessAndContrastAuto(resize_frame, auto_frame, 5);
@@ -68,10 +69,10 @@ int main() {
         enhancement_frame = imgEnhancement(adjust_frame);
 
         //进行模糊化处理
-//        denoise_frame = deNoise(enhancement_frame);
+        denoise_frame = deNoise(enhancement_frame);
 
-        //TODO:这里应该有个形态学变换
-        morphological_frame = imgMorphological(enhancement_frame);
+        //形态学变换
+        morphological_frame = imgMorphological(denoise_frame);
 
         //透视变换
         warp = getWarpPerspective(morphological_frame);
@@ -90,44 +91,22 @@ int main() {
         HoughLinesP(mask_frame, lines, 1, CV_PI / 180, 30, 30);
         Mat copy_mask = Mat::zeros(warp.size(), warp.type());
         for (auto &i : lines) {
-            line(copy_mask, Point(i[0], i[1]), Point(i[2], i[3]), Scalar(255,0,0),2);
+            line(copy_mask, Point(i[0], i[1]), Point(i[2], i[3]), Scalar(255,255,0),2);
         }
 
         Mat re_warp = reverse(copy_mask);
-        Mat dst;
-        add(re_warp, resize_frame, dst);
+        for (int i = 0; i < resize_frame.rows; ++i) {
+            for (int j = 0; j < resize_frame.cols ; ++j) {
+                if (!(!re_warp.at<Vec3b>(i,j)[0] && !re_warp.at<Vec3b>(i,j)[1] &&!re_warp.at<Vec3b>(i,j)[2] )) {
+                    resize_frame.at<Vec3b>(i,j)[0] = 0;
+                    resize_frame.at<Vec3b>(i,j)[1] = 0;
+                    resize_frame.at<Vec3b>(i,j)[2] = 255;
+                }
+            }
+        }
+        imshow("原图", resize_frame);
 
-        imshow("dst", dst);
         imshow("copy_mask", re_warp);
-
- /*       double k_queue[lines.size()];
-        int p1_ys[lines.size()];
-        int p2_xs[lines.size()];
-        for (int i = 0; i < lines.size(); i++) {
-            double k = (static_cast<double >(lines[i][3] - lines[i][1]) /
-                        static_cast<double >(lines[i][2] - lines[i][0]));
-            k_queue[i] = k;
-            p1_ys[i] = abs(static_cast<int>(-1 * k * lines[i][0] + lines[i][1]));
-            p2_xs[i] = abs(static_cast<int>(lines[i][1] / k * (-1) + lines[i][0]));
-        }
-        double k = 0;
-        double p1_y = 0, p2_x = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            k += k_queue[i];
-            p1_y += p1_ys[i];
-            p2_x += p2_xs[i];
-        }
-        k /= lines.size();
-        p1_y /= lines.size();
-        p2_x /= lines.size();
-        // x = 0时
-        Point p1(0, static_cast<int>(p1_y));
-        // y = 0时
-        Point p2(static_cast<int>(p2_x), 0);
-
-        line(resize_frame(roi), p1, p2, Scalar(0, 0, 255), 5);
-        imshow("frame", resize_frame);
-*/
 
         if (waitKey(20) == 'q')
             break;
@@ -137,7 +116,13 @@ int main() {
 }
 
 Mat imgMorphological(const Mat &input) {
-    return input;
+    Mat output;
+    Mat kernel1 = getStructuringElement(MORPH_RECT, Size(3,3));
+    Mat kernel2 = getStructuringElement(MORPH_RECT, Size(5,5));
+    dilate(input, output, kernel2);
+    erode(output, output, kernel1);
+
+    return output;
 }
 
 Mat edgeDetector(const Mat &input) {
@@ -153,7 +138,7 @@ Mat imgMask(const Mat &input) {
 
     // 设置阈值，挑出白色与黄色区域
     static Mat white_mask, yellow_mask;
-    static Vec3i white_low(0, 180, 0), yellow_low(26, 43, 46);
+    static Vec3i white_low(0, 250, 0), yellow_low(26, 35, 46);
     static Vec3i white_top(255, 255, 255), yellow_top(34, 255, 255);
     Mat output;
     Mat HLS_frame;
@@ -182,17 +167,12 @@ Mat deNoise(const Mat &input) {
     return output;
 }
 
-//void cannyCallBack(int, void *) {
-//    Canny(white_mask, canny_white, val, val * 2);
-//    imshow("white", canny_white);
-//}
-
 Mat getWarpPerspective(const Mat &input) {
     Point2f pts_src[] = {
-            Point2d(0, input.rows * 0.95),
-            Point2d(input.cols - 1, input.rows * 0.95),
-            Point2d(input.cols * 0.5, input.rows * 0.7),
-            Point2d(input.cols * 0.15, input.rows * 0.7),
+            Point2d(input.cols * 0.2, input.rows * 0.95),
+            Point2d(input.cols * 0.9, input.rows * 0.95),
+            Point2d(input.cols * 0.7, input.rows * 0.7),
+            Point2d(input.cols * 0.3, input.rows * 0.7),
     };
     Point2f pts_dst[] = {
             Point2d(0, input.rows * 0.9),
@@ -200,12 +180,6 @@ Mat getWarpPerspective(const Mat &input) {
             Point2d(input.cols-1, 0),
             Point2d(0, 0),
     };
-
-/*    for (int i = 0; i < 4; ++i) {
-        line(src, pts_dst[i], pts_dst[(i+1)%4],Scalar(255,0,0),2);
-        line(src, pts_src[i], pts_src[(i+1)%4],Scalar(0,0,255),2);
-    }
-    imshow("src", src);*/
 
     Mat M = getPerspectiveTransform(pts_src, pts_dst);
     Mat warp;
@@ -219,10 +193,10 @@ Mat getWarpPerspective(const Mat &input) {
 
 Mat reverse(Mat &src) {
     Point2f pts_src[] = {
-            Point2d(0, src.rows * 0.95),
-            Point2d(src.cols - 1, src.rows * 0.95),
-            Point2d(src.cols * 0.5, src.rows * 0.7),
-            Point2d(src.cols * 0.15, src.rows * 0.7),
+            Point2d(src.cols * 0.2, src.rows * 0.95),
+            Point2d(src.cols * 0.9, src.rows * 0.95),
+            Point2d(src.cols * 0.7, src.rows * 0.7),
+            Point2d(src.cols * 0.3, src.rows * 0.7),
     };
     Point2f pts_dst[] = {
             Point2d(0, src.rows * 0.9),
@@ -230,12 +204,6 @@ Mat reverse(Mat &src) {
             Point2d(src.cols-1, 0),
             Point2d(0, 0),
     };
-
-/*    for (int i = 0; i < 4; ++i) {
-        line(src, pts_dst[i], pts_dst[(i+1)%4],Scalar(255,0,0),2);
-        line(src, pts_src[i], pts_src[(i+1)%4],Scalar(0,0,255),2);
-    }
-    imshow("src", src);*/
 
     Mat M = getPerspectiveTransform(pts_dst, pts_src);
     Mat warp;
