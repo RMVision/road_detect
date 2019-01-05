@@ -1,5 +1,4 @@
 ﻿#include "mainwindow.h"
-#include "lanedetector.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -27,8 +26,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
-
 /**
  * @brief MainWindow::MyRunner 检测控制函数
  * @author HezeLao
@@ -49,9 +46,9 @@ int MainWindow::MyRunner(bool isSign){
     Mat res;
     bool haveSign;
     int countShow=1;
-    LaneDetector lanedetector;  // 创建类对象
+
     while(true){
-        waitKey(5);
+        waitKey(33);
         if(isPause) //暂停检测
             continue;
 
@@ -66,13 +63,13 @@ int MainWindow::MyRunner(bool isSign){
         }
 
         cv::resize(srcFrame, srcFrame, Size(576, 324), 0, 0, INTER_LINEAR);
-        cvtColor(srcFrame, srcFrame, COLOR_BGR2RGB);
 
         if(isSign){
-            haveSign = lanedetector.streetSign(srcFrame);
+            haveSign = false;//lanedetector.streetSign(srcFrame);
             qimg = QImage((const uchar*)(srcFrame.data),srcFrame.cols,srcFrame.rows, QImage::Format_RGB888); //简单地转换一下为Image对象，rgbSwapped是为了显示效果色彩好一些。
             ui->label_video->setPixmap(QPixmap::fromImage(qimg));
             ui->label_video->show();
+
             if(haveSign){
                 qsign = QImage("cut.jpg");  //读取截取的路牌
                 if(countShow%50==0){
@@ -86,7 +83,7 @@ int MainWindow::MyRunner(bool isSign){
                 countShow++;
             }
         }else{
-            lanedetector.myDetector(srcFrame);
+//            srcFrame = detect(srcFrame);
             qimg = QImage((const uchar*)(srcFrame.data),srcFrame.cols,srcFrame.rows, QImage::Format_RGB888); //简单地转换一下为Image对象，rgbSwapped是为了显示效果色彩好一些。
             ui->label_video->setPixmap(QPixmap::fromImage(qimg));
             ui->label_video->show();
