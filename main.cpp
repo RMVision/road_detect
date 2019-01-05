@@ -25,13 +25,14 @@ int main() {
     while (capture.read(frame)) {
         //修改图片大小
         resize(frame, resize_frame, s);
+        imshow("原图", resize_frame);
 
         //亮度及对比度自适应
         int brightness = 255;
         int contrast = 255;
         BrightnessAndContrastAuto(resize_frame, auto_frame, 5);
         adjustBrightnessContrast(auto_frame, adjust_frame, brightness - 255, contrast - 255);
-//        imshow("亮度及对比度自适应结果", adjust_frame);
+        imshow("亮度及对比度自适应结果", adjust_frame);
 
         //图像增强
         enhancement_frame = imgEnhancement(adjust_frame);
@@ -41,10 +42,11 @@ int main() {
 
         //形态学变换
         morphological_frame = imgMorphological(denoise_frame);
+        imshow("经过形态学变换的道路图", morphological_frame);
 
         //透视变换
         warp = getWarpPerspective(morphological_frame);
-//        imshow("经过透视变换的道路图", warp);
+        imshow("经过透视变换的道路图", warp);
 
         //标记黄色与白色
         mask_frame = imgMask(warp);
@@ -71,11 +73,10 @@ int main() {
                 }
             }
         }
-        imshow("原图", resize_frame);
-
+        imshow("标出车道线的原图", resize_frame);
         imshow("copy_mask", re_warp);
 
-        if (waitKey(20) == 'q')
+        if (waitKey(40) == 'q')
             break;
     }
     return 0;
