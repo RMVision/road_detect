@@ -20,7 +20,7 @@ Mat blurMat(Mat &input, int dSize);
 Mat drawRect(Mat &input, Mat &frame);
 
 int main() {
-    VideoCapture capture("/home/zzh/2.mp4");
+    VideoCapture capture("../video/challenge.mp4");
     Mat frame;
 
 
@@ -92,8 +92,8 @@ Mat drawRect(Mat &input, Mat &frame) {
     vector<Vec4i> hierarchy;
     Mat output = frame.clone();
     findContours(input, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
-    for (int i = 0; i < contours.size(); i++) {
-        Rect rect = boundingRect(contours[i]);
+    for (const auto &contour : contours) {
+        Rect rect = boundingRect(contour);
         rectangle(output, rect, Scalar(0,0,255),2);
     }
     return output;
