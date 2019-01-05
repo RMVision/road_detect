@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(OpenCV_DIR /usr/lib/cmake/opencv4)
 set(OpenCV2_DIR /usr/include/opencv4/opencv2)
 
-add_executable(road_detect AutoAdjust.hpp main.cpp)
+add_executable(road_detect AutoAdjust.hpp gui/main.cpp gui/mainwindow.cpp gui/mainwindow.h gui/ui_mainwindow.h gui/lanedetector.cpp gui/lanedetector.h)
 
 
 #查找Qt的库
