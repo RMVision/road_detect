@@ -40,7 +40,7 @@ void BrightnessAndContrastAuto(const Mat &src, Mat &dst, float clipHistPercent) 
         calcHist(&gray, 1, 0, Mat(), hist, 1, &histSize, &histRange, uniform, accumulate);
 
         // calculate cumulative distribution from the histogram
-        vector<float> accumulator(histSize);
+        vector<float> accumulator(static_cast<unsigned long>(histSize));
         accumulator[0] = hist.at<float>(0);
         for (int i = 1; i < histSize; i++) {
             accumulator[i] = accumulator[i - 1] + hist.at<float>(i);
@@ -62,10 +62,10 @@ void BrightnessAndContrastAuto(const Mat &src, Mat &dst, float clipHistPercent) 
     }
 
     // current range
-    float inputRange = maxGray - minGray;
+    auto inputRange = static_cast<float>(maxGray - minGray);
 
     alpha = (histSize - 1) / inputRange;   // alpha expands current range to histsize range
-    beta = -minGray * alpha;             // beta shifts current range so that minGray will go to 0
+    beta = static_cast<float>(-minGray * alpha);             // beta shifts current range so that minGray will go to 0
 
     // Apply brightness and contrast normalization
     // convertTo operates with saurate_cast
@@ -76,7 +76,6 @@ void BrightnessAndContrastAuto(const Mat &src, Mat &dst, float clipHistPercent) 
         int from_to[] = {3, 3};
         mixChannels(&src, 4, &dst, 1, from_to, 1);
     }
-    return;
 }
 
 /**

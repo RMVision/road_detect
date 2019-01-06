@@ -1,7 +1,7 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "../LaneDetect.h"
-#include "../SignDetect.h"
+#include "../include/LaneDetect.h"
+#include "../include/SignDetect.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
