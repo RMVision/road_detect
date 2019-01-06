@@ -1,14 +1,11 @@
-//
-// Created by niracler on 18-12-17.
-//
+﻿#include "GUI/mainwindow.h"
+#include <QApplication>
 
-#include <iostream>
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    MainWindow w;
+    w.show();
 
-using namespace std;
-
-int main(){
-
-    cout << "Hello World!!!" << endl;
-
-    return 0;
+    return QApplication::exec();
 }
