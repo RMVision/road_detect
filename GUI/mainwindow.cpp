@@ -1,6 +1,7 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "../LaneDetect.h"
+#include "../SignDetect.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -67,6 +68,7 @@ int MainWindow::MyRunner(bool isSign){
 
         if(isSign){
             haveSign = false;//lanedetector.streetSign(srcFrame);
+            srcFrame = imgSignDetect(srcFrame, false);
             qimg = QImage((const uchar*)(srcFrame.data),srcFrame.cols,srcFrame.rows, QImage::Format_RGB888); //简单地转换一下为Image对象，rgbSwapped是为了显示效果色彩好一些。
             ui->label_video->setPixmap(QPixmap::fromImage(qimg));
             ui->label_video->show();

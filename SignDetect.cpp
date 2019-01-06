@@ -1,78 +1,44 @@
 //
 // Created by zzh on 19-1-5.
 //
-#include <iostream>
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/opencv.hpp>
-#include "AutoAdjust.hpp" //亮度及对比度自适应方案
+#include "SignDetect.h"
 
-using namespace std;
-using namespace cv;
+Mat imgSignDetect(const Mat &input, bool flag) {
+    Mat output;
+    input.copyTo(output);
 
-Mat getRoi(Mat &input);
+    Mat temp = Mat::zeros(input.size(), CV_8UC1);
 
-Mat imgEnhancement(const Mat &input);
+//  Mat roi = getRoi(resize_frame);
+    // 转换HSV颜色空间
+    Mat HSV_frame;
+    cvtColor(input, HSV_frame, COLOR_BGR2HSV);
+    if(flag) imshow("转换HSV颜色空间", HSV_frame);
 
-Mat filterMat(Mat &input);
+    // 图像增强
+    Mat enhance_mat = imgEnhancement2(HSV_frame);
+    if(flag) imshow("图像增强", enhance_mat);
 
-Mat imgMorphological(Mat &input);
+    // 提取区域
+    Mat filter_mat = filterMat(enhance_mat);
+    if(flag) imshow("提取区域", filter_mat);
 
-Mat blurMat(Mat &input, int dSize);
+    // 模糊处理
+    Mat blur_mat = blurMat(filter_mat, 3);
+    if(flag) imshow("模糊处理", blur_mat);
 
-Mat cannyMat(Mat &input);
+    // 形态学变换
+    Mat morph_mat = imgMorphological(blur_mat);
+    if(flag) imshow("形态学变换", morph_mat);
 
-Mat drawRect(Mat &input, Mat &frame);
-
-
-void callback(int, void *);
-
-int main() {
-    VideoCapture capture("../video/vid2.mp4");
-    Mat frame;
-
-
-    int width = (int) capture.get(3);
-    int height = (int) capture.get(4);
-    Size s(width / 2, height / 2);
-    Mat resize_frame;
-
-    while (capture.read(frame)) {
-        resize(frame, resize_frame, s);
-        Mat temp = Mat::zeros(resize_frame.size(), CV_8UC1);
-
-//        Mat roi = getRoi(resize_frame);
-        // 转换HSV颜色空间
-        Mat HSV_frame;
-        cvtColor(resize_frame, HSV_frame, COLOR_BGR2HSV);
-
-        // 图像增强
-        Mat enhance_mat = imgEnhancement(HSV_frame);
-
-        // 提取区域
-        Mat filter_mat = filterMat(enhance_mat);
-
-        // 模糊处理
-        Mat blur_mat = blurMat(filter_mat, 3);
-
-
-        // 形态学变换
-        Mat morph_mat = imgMorphological(blur_mat);
-
-        // canny边缘处理
+    // canny边缘处理
 //        Mat canny_mat = cannyMat(morph_mat);
 
-        //绘制矩形
-        Mat result = drawRect(morph_mat, resize_frame);
-
-        imshow("result", result);
-        imshow("morph_mat", morph_mat);
-//        imshow("frame", resize_frame);
-        if (waitKey(10) == 'q')
-            break;
-    }
-    return 0;
+    //绘制矩形
+    Mat result = drawRect(morph_mat, output);
+    if(flag) imshow("绘制矩形", result);
+    if(flag) imshow("morph_mat", morph_mat);
+    return result;
 }
 
 Mat getRoi(Mat &input) {
@@ -80,7 +46,7 @@ Mat getRoi(Mat &input) {
     return input(rect);
 }
 
-Mat imgEnhancement(const Mat &input) {
+Mat imgEnhancement2(const Mat &input) {
     Mat output;
     Mat kernel = (Mat_<int>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
     filter2D(input, output, input.depth(), kernel);

@@ -3,7 +3,7 @@
 //
 
 #include "LaneDetect.h"
-#include "AutoAdjust.hpp" //亮度及对比度自适应方案
+#include "AutoAdjust.h" //亮度及对比度自适应方案
 
 Mat imgLaneDetect(const Mat &input, bool flag){
 
