@@ -67,24 +67,10 @@ int MainWindow::MyRunner(bool isSign){
         cv::resize(srcFrame, srcFrame, Size(576, 324), 0, 0, INTER_LINEAR);
 
         if(isSign){
-            haveSign = false;//lanedetector.streetSign(srcFrame);
             srcFrame = imgSignDetect(srcFrame, false);
             qimg = QImage((const uchar*)(srcFrame.data),srcFrame.cols,srcFrame.rows, QImage::Format_RGB888); //简单地转换一下为Image对象，rgbSwapped是为了显示效果色彩好一些。
             ui->label_video->setPixmap(QPixmap::fromImage(qimg));
             ui->label_video->show();
-
-            if(haveSign){
-                qsign = QImage("cut.jpg");  //读取截取的路牌
-                if(countShow%50==0){
-                    ui->label_sign_1->setPixmap(QPixmap::fromImage(qsign));
-                    ui->label_sign_1->show();
-                }
-                else if(countShow%50==25){
-                    ui->label_sign_2->setPixmap(QPixmap::fromImage(qsign));
-                    ui->label_sign_2->show();
-                }
-                countShow++;
-            }
         }else{
             srcFrame = imgLaneDetect(srcFrame, false);
             qimg = QImage((const uchar*)(srcFrame.data),srcFrame.cols,srcFrame.rows, QImage::Format_RGB888); //简单地转换一下为Image对象，rgbSwapped是为了显示效果色彩好一些。

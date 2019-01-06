@@ -44,7 +44,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(808, 605);
+        MainWindow->resize(808, 400);
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         label_video = new QLabel(centralWidget);
@@ -52,25 +52,16 @@ public:
         label_video->setGeometry(QRect(190, 30, 576, 324));
         pushButton_start_line = new QPushButton(centralWidget);
         pushButton_start_line->setObjectName(QString::fromUtf8("pushButton_start_line"));
-        pushButton_start_line->setGeometry(QRect(40, 90, 111, 41));
-//        pushButton_open = new QPushButton(centralWidget);
-//        pushButton_open->setObjectName(QString::fromUtf8("pushButton_open"));
-//        pushButton_open->setGeometry(QRect(40, 30, 111, 41));
+        pushButton_start_line->setGeometry(QRect(40, 30, 111, 41));
         pushButton_pause = new QPushButton(centralWidget);
         pushButton_pause->setObjectName(QString::fromUtf8("pushButton_pause"));
-        pushButton_pause->setGeometry(QRect(40, 210, 111, 41));
+        pushButton_pause->setGeometry(QRect(40, 150, 111, 41));
         pushButton_stop = new QPushButton(centralWidget);
         pushButton_stop->setObjectName(QString::fromUtf8("pushButton_stop"));
-        pushButton_stop->setGeometry(QRect(40, 270, 111, 41));
-        label_sign_1 = new QLabel(centralWidget);
-        label_sign_1->setObjectName(QString::fromUtf8("label_sign_1"));
-        label_sign_1->setGeometry(QRect(120, 370, 211, 121));
+        pushButton_stop->setGeometry(QRect(40, 210, 111, 41));
         pushButton_start_sign = new QPushButton(centralWidget);
         pushButton_start_sign->setObjectName(QString::fromUtf8("pushButton_start_sign"));
-        pushButton_start_sign->setGeometry(QRect(40, 150, 111, 41));
-        label_sign_2 = new QLabel(centralWidget);
-        label_sign_2->setObjectName(QString::fromUtf8("label_sign_2"));
-        label_sign_2->setGeometry(QRect(420, 370, 211, 121));
+        pushButton_start_sign->setGeometry(QRect(40, 90, 111, 41));
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
@@ -97,12 +88,9 @@ public:
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", nullptr));
         label_video->setText(QApplication::translate("MainWindow", "", nullptr));
         pushButton_start_line->setText(QApplication::translate("MainWindow", "车道线识别", nullptr));
-//        pushButton_open->setText(QApplication::translate("MainWindow", "打开文件", nullptr));
         pushButton_pause->setText(QApplication::translate("MainWindow", "暂停", nullptr));
         pushButton_stop->setText(QApplication::translate("MainWindow", "结束", nullptr));
-        label_sign_1->setText(QApplication::translate("MainWindow", "路牌1", nullptr));
         pushButton_start_sign->setText(QApplication::translate("MainWindow", "路牌识别", nullptr));
-        label_sign_2->setText(QApplication::translate("MainWindow", "路牌2", nullptr));
         menu->setTitle(QApplication::translate("MainWindow", "感谢HezeLao-RuiweiXie", nullptr));
     } // retranslateUi
 

@@ -2,17 +2,25 @@
 // Created by zzh on 19-1-5.
 //
 #include "SignDetect.h"
+#include "AutoAdjust.h"
 
 Mat imgSignDetect(const Mat &input, bool flag) {
-    Mat output;
+    Mat output, auto_frame, adjust_frame;
     input.copyTo(output);
 
     Mat temp = Mat::zeros(input.size(), CV_8UC1);
 
+    //亮度及对比度自适应
+    int brightness = 255;
+    int contrast = 255;
+    BrightnessAndContrastAuto(input, auto_frame, 5);
+    adjustBrightnessContrast(auto_frame, adjust_frame, brightness - 255, contrast - 255);
+    if(flag) imshow("亮度及对比度自适应结果", adjust_frame);
+
 //  Mat roi = getRoi(resize_frame);
     // 转换HSV颜色空间
     Mat HSV_frame;
-    cvtColor(input, HSV_frame, COLOR_BGR2HSV);
+    cvtColor(adjust_frame, HSV_frame, COLOR_BGR2HSV);
     if(flag) imshow("转换HSV颜色空间", HSV_frame);
 
     // 图像增强
