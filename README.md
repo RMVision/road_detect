@@ -91,9 +91,17 @@ road\_detect
 
 > 算法流程图，文字描述
 
-1. 对原视频进行反透视变换，将视角转变为鸟瞰图。
+![](img/lane_detect_uml.png)
 
-2. 对视频进行一些预处理，如腐蚀膨胀，平滑处理等，设置ROI，减少画面中车道线以外的干扰物的影响。
+1. 对原视频进行亮度及对比度自适应， 使视频更清晰。
+
+2. 使用Laplace对原视频质量增强。
+
+3. 对视频进行一些预处理，如腐蚀膨胀，平滑处理等，设置ROI，减少画面中车道线以外的干扰物的影响。
+
+4. 对原视频进行反透视变换，将视角转变为鸟瞰图。
+
+5. 通过HSL颜色通道提取黄色与白色并合并在一起。
 
 3. 进行Canny变换，检测出画面的边缘并且对图像自动进行二值化处理。
 
@@ -106,7 +114,21 @@ road\_detect
 
 ### 道路标示牌检测算法设计
 
-> 算法流程图，文字描述
+![](img/sign_detect_uml.png)
+
+1. 对原视频进行亮度及对比度自适应， 使视频更清晰。
+
+2. 转换为HSV颜色空间。
+
+2. 使用Laplace对原视频质量增强。
+
+3. 中值模糊
+
+4. 形态学变换
+
+3. 绘制矩形。
+
+
 
 ### 用户接口设计
 
@@ -121,9 +143,118 @@ road\_detect
 
 > 关键代码及文字说明
 
+```CPP
+
+    Mat auto_frame, adjust_frame, denoise_frame;
+    Mat enhancement_frame, morphological_frame;
+    Mat warp, edges_frame;
+    Mat mask_frame, output;
+
+    // 设置ROI
+    Mat roi_mat;
+    vector<Vec4i> lines;
+
+    //亮度及对比度自适应
+    int brightness = 255;
+    int contrast = 255;
+    BrightnessAndContrastAuto(input, auto_frame, 5);
+    adjustBrightnessContrast(auto_frame, adjust_frame, brightness - 255, contrast - 255);
+    if(flag) imshow("亮度及对比度自适应结果", adjust_frame);
+
+    //图像增强
+    enhancement_frame = imgEnhancement(adjust_frame);
+    if(flag) imshow("使用Laplace图像增强的道路图", enhancement_frame);
+
+    //进行模糊化处理
+    denoise_frame = deNoise(enhancement_frame);
+    if(flag) imshow("经过模糊化处理的道路图", denoise_frame);
+
+    //形态学变换
+    morphological_frame = imgMorphological(denoise_frame);
+    if(flag) imshow("经过形态学变换的道路图", morphological_frame);
+
+    //透视变换
+    warp = getWarpPerspective(morphological_frame);
+    if(flag) imshow("经过透视变换的道路图", warp);
+
+    //标记黄色与白色
+    mask_frame = imgMask(warp);
+    if(flag) imshow("标记黄色与白色", mask_frame);
+
+    //边缘检测
+    edges_frame = edgeDetector(mask_frame);
+    if(flag) imshow("进行边缘检测", edges_frame);
+
+    // roi Hough直线检测
+    HoughLinesP(mask_frame, lines, 1, CV_PI / 180, 30, 30);
+    Mat copy_mask = Mat::zeros(warp.size(), warp.type());
+    for (auto &i : lines) {
+        line(copy_mask, Point(i[0], i[1]), Point(i[2], i[3]), Scalar(255,255,0),2);
+    }
+
+    input.copyTo(output);
+    Mat re_warp = reverse(copy_mask);
+    for (int i = 0; i < output.rows; ++i) {
+        for (int j = 0; j < output.cols ; ++j) {
+            if (!(!re_warp.at<Vec3b>(i,j)[0] && !re_warp.at<Vec3b>(i,j)[1] &&!re_warp.at<Vec3b>(i,j)[2] )) {
+                output.at<Vec3b>(i,j)[0] = 0;
+                output.at<Vec3b>(i,j)[1] = 0;
+                output.at<Vec3b>(i,j)[2] = 255;
+            }
+        }
+    }
+    if(flag) imshow("标出车道线的原图", output);
+    if(flag) imshow("copy_mask", re_warp);
+
+```
+
 ### 道路标示牌检测算法实现
 
 > 关键代码及文字说明
+```cpp
+    Mat output, auto_frame, adjust_frame;
+    input.copyTo(output);
+
+    Mat temp = Mat::zeros(input.size(), CV_8UC1);
+
+    //亮度及对比度自适应
+    int brightness = 255;
+    int contrast = 255;
+    BrightnessAndContrastAuto(input, auto_frame, 5);
+    adjustBrightnessContrast(auto_frame, adjust_frame, brightness - 255, contrast - 255);
+    if(flag) imshow("亮度及对比度自适应结果", adjust_frame);
+
+//  Mat roi = getRoi(resize_frame);
+    // 转换HSV颜色空间
+    Mat HSV_frame;
+    cvtColor(adjust_frame, HSV_frame, COLOR_BGR2HSV);
+    if(flag) imshow("转换HSV颜色空间", HSV_frame);
+
+    // 图像增强
+    Mat enhance_mat = imgEnhancement2(HSV_frame);
+    if(flag) imshow("图像增强", enhance_mat);
+
+    // 提取区域
+    Mat filter_mat = filterMat(enhance_mat);
+    if(flag) imshow("提取区域", filter_mat);
+
+    // 模糊处理
+    Mat blur_mat = blurMat(filter_mat, 3);
+    if(flag) imshow("模糊处理", blur_mat);
+
+    // 形态学变换
+    Mat morph_mat = imgMorphological(blur_mat);
+    if(flag) imshow("形态学变换", morph_mat);
+
+    // canny边缘处理
+//        Mat canny_mat = cannyMat(morph_mat);
+
+    //绘制矩形
+    Mat result = drawRect(morph_mat, output);
+    if(flag) imshow("绘制矩形", result);
+    if(flag) imshow("morph_mat", morph_mat);
+
+```
 
 ### 系统运行结果及算法性能
 
