@@ -1,6 +1,10 @@
 //
-// Created by niracler on 18-12-30.
+// Created by niracler on 19-1-6.
 //
+
+
+#ifndef ROAD_DETECT_AUTOADJUST_H
+#define ROAD_DETECT_AUTOADJUST_H
 
 #include <iostream>
 #include <opencv2/core.hpp>
@@ -122,3 +126,4 @@ int adjustBrightnessContrast(InputArray src, OutputArray dst, int brightness, in
 }
 
 
+#endif //ROAD_DETECT_AUTOADJUST_H

@@ -30,5 +30,7 @@ Mat edgeDetector(const Mat &input);
 
 Mat imgMorphological(const Mat &input);
 
+Mat imgLaneDetect(const Mat &input, bool flag);
+
 
 #endif //ROAD_DETECT_LANEDETECT_H
