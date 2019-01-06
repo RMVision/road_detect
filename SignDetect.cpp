@@ -29,7 +29,7 @@ Mat drawRect(Mat &input, Mat &frame);
 void callback(int, void *);
 
 int main() {
-    VideoCapture capture("/home/zzh/4.mp4");
+    VideoCapture capture("../video/vid2.mp4");
     Mat frame;
 
 
@@ -76,7 +76,7 @@ int main() {
 }
 
 Mat getRoi(Mat &input) {
-    Rect rect(0, input.rows * 0.2, input.cols, input.rows * 0.8);
+    Rect rect(0, static_cast<int>(input.rows * 0.2), input.cols, static_cast<int>(input.rows * 0.8));
     return input(rect);
 }
 
@@ -130,8 +130,8 @@ Mat drawRect(Mat &input, Mat &frame) {
     vector<Vec4i> hierarchy;
     Mat output = frame.clone();
     findContours(input, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
-    for (int i = 0; i < contours.size(); i++) {
-        Rect rect = boundingRect(contours[i]);
+    for (const auto &contour : contours) {
+        Rect rect = boundingRect(contour);
         double k = (double) (rect.width) / rect.height;
         double area = rect.width * rect.height;
         if (k >= 0.95 && area > 1000)
